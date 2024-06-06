@@ -1,55 +1,35 @@
-import { createClient } from '@supabase/supabase-js';
 import { useQuery, useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_API_KEY;
-export const supabase = createClient(supabaseUrl, supabaseKey);
-
-import React from "react";
 export const queryClient = new QueryClient();
 export function SupabaseProvider({ children }) {
     return React.createElement(QueryClientProvider, { client: queryClient }, children);
 }
 
-const fromSupabase = async (query) => {
-    const { data, error } = await query;
-    if (error) throw new Error(error.message);
-    return data;
+const mockData = {
+    users: [],
+    posts: [],
+    comments: []
 };
 
-/* supabase integration types
-
-User // table: users
-    id: number
-    username: string
-    email: string
-
-Post // table: posts
-    id: number
-    user_id: number // foreign key to User
-    title: string
-    content: string
-    created_at: string
-
-Comment // table: comments
-    id: number
-    post_id: number // foreign key to Post
-    user_id: number // foreign key to User
-    content: string
-    created_at: string
-
-*/
+const fromMockDatabase = async (query) => {
+    // Mock database query
+    return mockData[query.table];
+};
 
 // Hooks for User table
 export const useUsers = () => useQuery({
     queryKey: ['users'],
-    queryFn: () => fromSupabase(supabase.from('users').select('*')),
+    queryFn: () => fromMockDatabase({ table: 'users' }),
 });
 
 export const useAddUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (newUser) => fromSupabase(supabase.from('users').insert([newUser])),
+        mutationFn: (newUser) => {
+            mockData.users.push(newUser);
+            return newUser;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('users');
         },
@@ -59,7 +39,13 @@ export const useAddUser = () => {
 export const useUpdateUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (updatedUser) => fromSupabase(supabase.from('users').update(updatedUser).eq('id', updatedUser.id)),
+        mutationFn: (updatedUser) => {
+            const index = mockData.users.findIndex(user => user.id === updatedUser.id);
+            if (index !== -1) {
+                mockData.users[index] = updatedUser;
+            }
+            return updatedUser;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('users');
         },
@@ -69,7 +55,10 @@ export const useUpdateUser = () => {
 export const useDeleteUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (userId) => fromSupabase(supabase.from('users').delete().eq('id', userId)),
+        mutationFn: (userId) => {
+            mockData.users = mockData.users.filter(user => user.id !== userId);
+            return userId;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('users');
         },
@@ -79,13 +68,16 @@ export const useDeleteUser = () => {
 // Hooks for Post table
 export const usePosts = () => useQuery({
     queryKey: ['posts'],
-    queryFn: () => fromSupabase(supabase.from('posts').select('*')),
+    queryFn: () => fromMockDatabase({ table: 'posts' }),
 });
 
 export const useAddPost = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (newPost) => fromSupabase(supabase.from('posts').insert([newPost])),
+        mutationFn: (newPost) => {
+            mockData.posts.push(newPost);
+            return newPost;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('posts');
         },
@@ -95,7 +87,13 @@ export const useAddPost = () => {
 export const useUpdatePost = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (updatedPost) => fromSupabase(supabase.from('posts').update(updatedPost).eq('id', updatedPost.id)),
+        mutationFn: (updatedPost) => {
+            const index = mockData.posts.findIndex(post => post.id === updatedPost.id);
+            if (index !== -1) {
+                mockData.posts[index] = updatedPost;
+            }
+            return updatedPost;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('posts');
         },
@@ -105,7 +103,10 @@ export const useUpdatePost = () => {
 export const useDeletePost = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (postId) => fromSupabase(supabase.from('posts').delete().eq('id', postId)),
+        mutationFn: (postId) => {
+            mockData.posts = mockData.posts.filter(post => post.id !== postId);
+            return postId;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('posts');
         },
@@ -115,13 +116,16 @@ export const useDeletePost = () => {
 // Hooks for Comment table
 export const useComments = () => useQuery({
     queryKey: ['comments'],
-    queryFn: () => fromSupabase(supabase.from('comments').select('*')),
+    queryFn: () => fromMockDatabase({ table: 'comments' }),
 });
 
 export const useAddComment = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (newComment) => fromSupabase(supabase.from('comments').insert([newComment])),
+        mutationFn: (newComment) => {
+            mockData.comments.push(newComment);
+            return newComment;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('comments');
         },
@@ -131,7 +135,13 @@ export const useAddComment = () => {
 export const useUpdateComment = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (updatedComment) => fromSupabase(supabase.from('comments').update(updatedComment).eq('id', updatedComment.id)),
+        mutationFn: (updatedComment) => {
+            const index = mockData.comments.findIndex(comment => comment.id === updatedComment.id);
+            if (index !== -1) {
+                mockData.comments[index] = updatedComment;
+            }
+            return updatedComment;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('comments');
         },
@@ -141,7 +151,10 @@ export const useUpdateComment = () => {
 export const useDeleteComment = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (commentId) => fromSupabase(supabase.from('comments').delete().eq('id', commentId)),
+        mutationFn: (commentId) => {
+            mockData.comments = mockData.comments.filter(comment => comment.id !== commentId);
+            return commentId;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries('comments');
         },
